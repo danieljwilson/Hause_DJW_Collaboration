@@ -1,5 +1,5 @@
 # Collaboration Project
-### A collection of ideas etc. for upcoming projects
+### A collection of IDEAS etc. for upcoming projects
 
 
 
