@@ -5,8 +5,11 @@
 
 ---
 
-Testing... Me first
+<<<<<<< HEAD
 Testing...**second** tester here...
+=======
+Testing... Me first
+>>>>>>> d4a442daef41e64da8a591c5dbe3f92f7f18de11
 
 
 
