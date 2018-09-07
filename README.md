@@ -9,13 +9,9 @@ Testing...
 
 
 
-<<<<<<< HEAD
-=======
-
-
-Testing 2...
+Dual editing...risky..
 
 
 
-Testing 3...
-Testing 3...
+---
+
