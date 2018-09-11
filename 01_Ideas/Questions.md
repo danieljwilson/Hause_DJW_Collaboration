@@ -1,6 +1,6 @@
 # QUESTION IDEAS 
 
-How long have you been using social media?
+How long have you been using social media? (e.g. Twitter, Instagram, Snapchat, Facebook)
 
 ---
 
@@ -9,6 +9,10 @@ How many hours do you use Facebook per week?
 ---
 
 How many hours do you watch Netflix per week?
+
+---
+
+How often do you order delivery (Ubereats, foodora, other)?
 
 ---
 
@@ -30,4 +34,39 @@ Likert 7 point
 Is social media a distraction in your life (in terms of acheiving your goals)?
 
 Likert 7 point
+
+---
+
+What is the main reason you use social media?
+
+1. Relax
+2. Interact with friends
+3. Educate
+4. Post stories/photos
+
+---
+
+Which of the following do you use?
+
+1. Twitter
+2. Facebook
+3. Instagram
+4. Snapchat
+5. Youtube
+6. Netflix
+7. Tumblr
+8. Adblocker (any kind)
+9. Amazon Prime
+
+---
+
+How satisified are you with your life?
+
+Likert 7
+
+---
+
+
+
+
 
