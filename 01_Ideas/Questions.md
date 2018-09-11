@@ -12,16 +12,16 @@ How many hours do you watch Netflix per week?
 
 ---
 
-How often do you order delivery (Ubereats, foodora, other)?
+*How often do you order delivery (Ubereats, foodora, other)?*
 
 ---
 
-What is the least amount of money you would accept to quit Facebook for:
+*What is the least amount of money you would accept to quit Facebook for:*
 
-1. 1 day
-2. 1 week
-3. 1 month
-4. 1 year
+1. *1 day*
+2. *1 week*
+3. *1 month*
+4. *1 year*
 
 ---
 
@@ -40,9 +40,11 @@ Likert 7 point
 What is the main reason you use social media?
 
 1. Relax
-2. Interact with friends
-3. Educate
+2. Interact/keep in touch with friends
+3. Learn about the world
 4. Post stories/photos
+5. Boredom
+6. Read about what other people are doing
 
 ---
 
