@@ -38,3 +38,7 @@ Code: sontus
 
 5. Material Values Scale (Richins 2004)
 
+Code: mvs
+
+>Richins, M. L. (2004). The material values scale: Measurement properties and development of a short form. Journal of consumer Research, 31(1), 209-219. 
+
