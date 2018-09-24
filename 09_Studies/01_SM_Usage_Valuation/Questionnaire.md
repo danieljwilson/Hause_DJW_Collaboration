@@ -42,3 +42,13 @@ Code: mvs
 
 >Richins, M. L. (2004). The material values scale: Measurement properties and development of a short form. Journal of consumer Research, 31(1), 209-219. 
 
+
+
+6. Pure Procrastination Scale (Steel 2010)
+
+Code: pps
+
+* https://procrastinus.com/piers-steel/about-the-measure/
+* 5 measure version better?
+* https://www.sciencedirect.com/science/article/pii/S0191886910000930?via%3Dihub
+
