@@ -1,6 +1,8 @@
 # Ideas for Social Media Project 
 
-**What is social media doing?** 
+
+
+What is social media doing?** 
 
 What effects is it having on us? 
 
@@ -34,3 +36,36 @@ How does follower growth correlate with words used?
 ​        What was the content of that tweet?
 
 ​        Do their tweets have different emotional content before and after becoming famous?
+
+---
+
+
+
+# Discounting
+
+#### 1. Basic Questions
+
+* Do people discount social media usage?
+
+* Do the measured discounting curves correlate with self-reported measures of addiction
+  * Addiction
+  * Self-Control
+  * Well-being
+  * Big Five
+  * Social Media Usage
+    * Hours
+    * Number of friends
+  * Introversion/Extroversion
+
+
+
+#### 2. Discounting Comparison
+
+- Compare between social media
+  - Someone high on FB should also be high on Instagram/Snapchat/Others
+
+- Compare between social media and other discounting curves
+
+  - $
+  - Food
+  - Effort
