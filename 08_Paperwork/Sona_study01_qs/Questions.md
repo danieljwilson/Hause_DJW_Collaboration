@@ -24,6 +24,20 @@ Do you feel pressured to use social media because your friends use social media?
 
 What percentage of your social media time is spent on your mobile phone?
 
+Agree with statement: 
+
+​	I wish I ate more healthfully
+
+​	I wish I procrastinated less
+
+
+
+
+
+
+
+
+
 GET EXACT USAGE DATA (iOS):
 
  	1. Go to Screen Time App
