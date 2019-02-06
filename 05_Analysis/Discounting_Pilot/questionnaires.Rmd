@@ -1,0 +1,451 @@
+---
+title: "Social Media questionnaires"
+output: html_notebook
+editor_options: 
+  chunk_output_type: console
+---
+
+# Questions:
+Raw alpha vs alpha std?
+What if dropping an item improves alpha? Do it?
+
+```{r}
+rm(list = ls())
+library(tidyverse); library(data.table); library(broom); library(dtplyr); library(lme4); library(lmerTest); library(ggbeeswarm); library(cowplot)
+
+# load("questionnaires.RData")
+# save.image("questionnaires.RData")
+source("https://raw.githubusercontent.com/hauselin/Rcode/master/cleanQuestionnaire.R")
+```
+
+```{r read data}
+dataFile <- "Data/sm_questionnaires.csv"
+qualtrics <- tbl_dt(fread(dataFile, header = T)[-1])
+
+names(qualtrics)[duplicated(names(qualtrics))] # check duplicated column names
+qualtrics[, n_distinct(ResponseID)]
+
+# remove incomplete subjects
+qualtrics$debrief = as.numeric(qualtrics$debrief)
+qualtrics<-subset(qualtrics, (!is.na(qualtrics$debrief)))
+
+qualtrics[, n_distinct(ResponseID)]
+
+# create subject ID
+qualtrics$subjectID = 1:qualtrics[, n_distinct(ResponseID)]
+```
+
+
+```{r debrief}
+#### get debriefing stuff ####
+glimpse(qualtrics)
+demographics <- select(qualtrics, ResponseID, subjectID, age, gender, ethnicity, ethnicity_TEXT, ses)
+
+# age/gender were mislabled
+temp_gender = demographics$age
+demographics$age = demographics$gender
+demographics$gender = temp_gender
+
+# recode gender
+demographics$gender <- ifelse(demographics$gender == "1", "m", ifelse(demographics$gender == "2", "f", ""))
+
+# recode ethnicity
+demographics[ethnicity == '1', ethnicity := 'white/caucasian']
+demographics[ethnicity == '2', ethnicity := 'asian/asian canadian']
+demographics[ethnicity == '3', ethnicity := 'african canadian/black']
+demographics[ethnicity == '4', ethnicity := 'hispanic/latino']
+demographics[ethnicity == '5', ethnicity := 'southeast asian/indian']
+demographics[ethnicity == '6', ethnicity := 'native canadian']
+demographics[ethnicity == '7', ethnicity := 'pacific islander']
+demographics[ethnicity == '8', ethnicity := ethnicity_TEXT]
+
+# create df
+demographics <- select(demographics, ResponseID, subjectID, age, gender, ethnicity, ses)
+demographics$age = as.numeric(demographics$age)
+
+table(demographics$gender)
+demographics[, .(age = mean(as.numeric(age), na.rm = T), ageSD = sd(as.numeric(age), na.rm = T),
+            ageMin = min(as.numeric(age), na.rm = T), ageMax = max(as.numeric(age), na.rm = T))]
+# write.csv(debrief, "./DataCleaned/Debrief.csv", row.names = F)
+
+```
+
+
+```{r get questionnaires}
+wellBeing <- select(qualtrics, subjectID, starts_with("wb")) %>% tbl_df() %>% mutate_all(as.numeric) %>% tbl_dt()
+addictionProne <- select(qualtrics, subjectID, starts_with("addict")) %>% tbl_df() %>% mutate_all(as.numeric) %>% tbl_dt()
+materialism <- select(qualtrics, subjectID, starts_with("mvs")) %>% tbl_df() %>% mutate_all(as.numeric) %>% tbl_dt()
+socialNet <- select(qualtrics, subjectID, starts_with("sontus")) %>% tbl_df() %>% mutate_all(as.numeric) %>% tbl_dt()
+selfControl <- select(qualtrics, subjectID, starts_with("bsc")) %>% tbl_df() %>% mutate_all(as.numeric) %>% tbl_dt()
+procrastination <- select(qualtrics, subjectID, starts_with("pps")) %>% tbl_df() %>% mutate_all(as.numeric) %>% tbl_dt()
+bigFive <- select(qualtrics, subjectID, starts_with("bfi")) %>% tbl_df() %>% mutate_all(as.numeric) %>% tbl_dt()
+socialQs <- select(qualtrics, subjectID, starts_with("o")) %>% tbl_df() %>% mutate_all(as.numeric) %>% tbl_dt() 
+
+scales <- list()
+scalesWideRaw <- list()
+
+# test for people choosing only one score
+test_range = socialQs
+which(apply(test_range[,-1], 1, range)[2,] - apply(test_range[,-1], 1, range)[1,] ==0)
+
+# remove 56, 141, 209 (done at the end)
+
+```
+
+
+```{r social media questions}
+
+summary(socialQs)
+
+socialQs = socialQs %>%
+  rename(life_satisfaction = o_1, 
+         adblock_computer = o_2_1, 
+         adblock_phone = o_2_2, 
+         a_prime = o_2_3, 
+         netflix = o_2_4, 
+         foodora = o_2_5, 
+         uber_eats = o_2_6,
+         facebook_rank = o_3_1,
+         instagram_rank = o_3_2,
+         snapchat_rank = o_3_3,
+         twitter_rank = o_3_4,
+         youtube_rank = o_3_5,
+         netflix_rank = o_3_6,
+         tumblr_rank = o_3_7,
+         weibo_rank = o_3_8,
+         ads1 = o_4_1,
+         ads2 = o_4_2,
+         ads3 = o_4_3,
+         ads4 = o_4_4,
+         ads5 = o_4_5,
+         noAd_price = o_5_1,
+         predict_1 = o_6_1,
+         predict_5 = o_6_2,
+         predict_10 = o_6_3,
+         predict_20 = o_6_4,
+         facebook_years = o_7_1,
+         instagram_years = o_7_2,
+         snapchat_years = o_7_3,
+         twitter_years = o_7_4,
+         youtube_years = o_7_5,
+         netflix_years = o_7_6,
+         tumblr_years = o_7_9,
+         weibo_years = o_7_10,
+         facebook_mins = o_8_1,
+         instagram_mins = o_8_2,
+         snapchat_mins = o_8_3,
+         twitter_mins = o_8_4,
+         youtube_mins = o_8_5,
+         netflix_mins = o_8_6,
+         tumblr_mins = o_8_9,
+         weibo_mins = o_8_10,
+         percent_phone = o_9_1,
+         main_reason = o_10,
+         less_time = o_11_1,
+         distraction = o_11_2,
+         healthier = o_11_3,
+         procrast = o_11_4,
+         fin_resp = o_11_5,
+         never_invent = o_11_6,
+         weekly_sm_time = o_12_2) #%>%
+
+# recode o_2 to 0/1
+socialQs$adblock_computer = socialQs$adblock_computer %>% replace_na(0)
+socialQs$adblock_phone = socialQs$adblock_phone %>% replace_na(0)
+socialQs$a_prime = socialQs$a_prime %>% replace_na(0)
+socialQs$netflix = socialQs$netflix %>% replace_na(0)
+socialQs$foodora = socialQs$foodora %>% replace_na(0)
+socialQs$uber_eats = socialQs$uber_eats %>% replace_na(0)
+
+# recode years NA -> 0
+socialQs$facebook_years = socialQs$facebook_years %>% replace_na(0)
+socialQs$instagram_years = socialQs$instagram_years %>% replace_na(0)
+socialQs$snapchat_years = socialQs$snapchat_years %>% replace_na(0)
+socialQs$twitter_years = socialQs$twitter_years %>% replace_na(0)
+socialQs$youtube_years = socialQs$youtube_years %>% replace_na(0)
+socialQs$netflix_years = socialQs$netflix_years %>% replace_na(0)
+socialQs$tumblr_years = socialQs$tumblr_years %>% replace_na(0)
+socialQs$weibo_years = socialQs$weibo_years %>% replace_na(0)
+
+# recode mins NA -> 0
+socialQs$facebook_mins = socialQs$facebook_mins %>% replace_na(0)
+socialQs$instagram_mins = socialQs$instagram_mins %>% replace_na(0)
+socialQs$snapchat_mins = socialQs$snapchat_mins %>% replace_na(0)
+socialQs$twitter_mins = socialQs$twitter_mins %>% replace_na(0)
+socialQs$youtube_mins = socialQs$youtube_mins %>% replace_na(0)
+socialQs$netflix_mins = socialQs$netflix_mins %>% replace_na(0)
+socialQs$tumblr_mins = socialQs$tumblr_mins %>% replace_na(0)
+socialQs$weibo_mins = socialQs$weibo_mins %>% replace_na(0)
+
+# recode main reason
+socialQs$main_reason = as.character(socialQs$main_reason)
+socialQs[main_reason == '1', main_reason := 'interact with friends']
+socialQs[main_reason == '2', main_reason := 'see other people']
+socialQs[main_reason == '3', main_reason := 'news']
+socialQs[main_reason == '4', main_reason := 'entertainment']
+socialQs[main_reason == '5', main_reason := 'posting']
+socialQs[main_reason == '6', main_reason := 'boredom']
+socialQs[main_reason == '9', main_reason := 'relax']
+socialQs[main_reason == '10', main_reason := 'procrastinate']
+socialQs[main_reason == '11', main_reason := 'trend spotting']
+socialQs[main_reason == '12', main_reason := 'hobby related']
+
+# add total social media column
+socialQs$daily_sm_time = apply(socialQs[,35:42], 1, sum)
+  
+```
+
+
+
+```{r APP}
+# Addiction-Prone Personality (APP) Scale Items 
+# Barnes, G. E., Murray, R. P., Patton, D., Bentler, P. M., & Anderson, R. E. (2000)
+# 21 Item
+
+summary(addictionProne)
+scalesWideRaw$addictionProne <- addictionProne
+
+# 1: yes
+# 9: no
+
+addictionProne_clean <- cleanQuestionnaire(data = addictionProne, scaleName = 'addictionProne',
+                                           scaleMin = 0, scaleMax = 1,
+                                           itemsToReverse = c(3, 8, 12, 21))
+
+ggplot(addictionProne_clean$long, aes(addictionProne_m)) + geom_histogram()
+
+scales$addictionProne_clean <- addictionProne_clean
+
+# Reliability (raw_alpha or std.alpha)
+addictionProne_clean$reliability$addictionProne$total$raw_alpha
+```
+
+```{r well-being}
+# Well-Being 
+
+# http://www.mysmu.edu/faculty/williamtov/pubs/2009_DienerEtAl.pdf
+# "Diener, E., Wirtz, D., Tov, W., Kim-Prieto, C., Choi, D.-w., Oishi, S., & Biswas-Diener, R. (2010). 
+# New well-being measures: Short scales to assess flourishing and positive and negative feelings. 
+# Social Indicators Research, 97(2), 143-156. doi:10.1007/s11205-009-9493-y"
+
+wellBeing1 = wellBeing[,1:13]
+wellBeing2 = wellBeing[,c(1,14:21)]
+
+# Scale of Positive and Negative Experience (SPANE)
+# WellBeing1
+summary(wellBeing1)
+scalesWideRaw$wellBeing1 <- wellBeing1
+
+# 1: very rarely or never
+# 5: very often or always
+
+wellBeing1_clean <- cleanQuestionnaire(data = wellBeing1, scaleName = 'wellBeing1',
+                                       scaleMin = 1, scaleMax = 5,
+                                       subscales = list(spane_p = c(1, 3, 5, 7, 10, 12), 
+                                                        spane_n = c(2, 4, 6, 8, 9, 11))
+                                       )
+
+ggplot(wellBeing1_clean$long[wellBeing1_subscale == "overall"], aes(wellBeing1_m)) + geom_histogram()
+
+scales$wellBeing1_clean <- wellBeing1_clean
+
+wellBeing1_clean$reliability$spane_p$total$raw_alpha
+wellBeing1_clean$reliability$spane_n$total$raw_alpha
+
+# Psychological Well-Being Scale (PWB)
+# WellBeing2
+
+summary(wellBeing2)
+scalesWideRaw$wellBeing2 <- wellBeing2
+
+# 1: strongly disagree
+# 7: strongly agree
+
+wellBeing2_clean <- cleanQuestionnaire(data = wellBeing2, scaleName = 'wellBeing2',
+                                       scaleMin = 1, scaleMax = 7
+                                       )
+
+ggplot(wellBeing2_clean$long, aes(wellBeing2_m)) + geom_histogram()
+
+scales$wellBeing2_clean <- wellBeing2_clean
+
+# Reliability (raw_alpha or std.alpha)
+wellBeing2_clean$reliability$wellBeing2$total$raw_alpha
+```
+
+```{r Material Values Scale}
+# Material Values Scale
+
+# "Richins, M. L. (2004).
+# The material values scale: Measurement properties and development of a short form. 
+# Journal of consumer Research, 31(1), 209-219."
+
+summary(materialism)
+scalesWideRaw$materialism <- materialism
+
+# 1: not at all true
+# 5: completely true
+
+materialism_clean <- cleanQuestionnaire(data = materialism, scaleName = 'materialism', 
+                              scaleMin = 1, scaleMax = 5,
+                              subscales = list(success = c(1:6), 
+                                               centrality = c(7:13), 
+                                               happiness = c(14:18)), 
+                              itemsToReverse = c(3,6,7,8,9,13,14,16))
+
+ggplot(materialism_clean$long[materialism_subscale == "overall"], aes(materialism_m)) + geom_histogram()
+
+scales$materialism_clean <- materialism_clean
+
+# Reliability (raw_alpha or std.alpha)
+materialism_clean$reliability$success$total$raw_alpha
+materialism_clean$reliability$centrality$total$raw_alpha
+materialism_clean$reliability$happiness$total$raw_alpha
+```
+
+
+
+```{r Social Networking Time Use Scale}
+# Social Networking Time Use Scale
+# "Olufadi, Y. (2016). Social networking time use scale (SONTUS): 
+# A new instrument for measuring the time spent on the social networking sites. 
+# Telematics and Informatics, 33(2), 452-471. doi:10.1016/j.tele.2015.11.002"
+
+summary(socialNet)
+scalesWideRaw$socialNet <- socialNet
+
+# 1: not applicable to me during the past week
+# 11: I used it more than 3 times during the past week and spent more than 30 min each time
+
+socialNet_clean <- cleanQuestionnaire(data = socialNet, scaleName = 'socialNet',
+                                      scaleMin = 1, scaleMax = 11)
+
+ggplot(socialNet_clean$long, aes(socialNet_m)) + geom_histogram()
+
+scales$socialNet_clean <- socialNet_clean
+
+# Reliability (raw_alpha or std.alpha)
+socialNet_clean$reliability$socialNet$total$raw_alpha
+```
+
+
+```{r (Brief) Self Control Scale}
+# (Brief) Self Control Scale
+
+# Tangney, J. P., Baumeister, R. F., & Boone, A. L. (2004). High self control predicts good adjustment, less 
+# pathology, better grades, and interpersonal success. Journal of Personality, 72(2), 271-324.
+
+# 1: not at all 
+# 5: very much
+
+summary(selfControl)
+scalesWideRaw$selfControl <- selfControl
+
+selfControl_clean <-  cleanQuestionnaire(data = selfControl, scaleName = 'selfControl',
+                                         scaleMin = 1, scaleMax = 5,
+                                         itemsToReverse = c(2,3,4,5,7,9,10,12,13))
+
+ggplot(selfControl_clean$long, aes(selfControl_m)) + geom_histogram()
+
+scales$selfControl_clean <- selfControl_clean
+
+# Reliability (raw_alpha or std.alpha)
+selfControl_clean$reliability$selfControl$total$raw_alpha
+```
+
+```{r Pure Procrastination Scale}
+# NOTE 3 SUBJECTS WITH NA VALUES
+which(is.na(procrastination$pps_1))
+
+# Pure Procrastination Scale
+
+# Steel, P. (2010). Arousal, avoidant and decisional procrastinators: 
+# Do they exist? Personality and Individual Differences, 48, 926-934.
+
+# 1: strongly disagree
+# 5: strongly agree
+
+summary(procrastination)
+scalesWideRaw$procrastination <- procrastination
+
+procrastination_clean <-  cleanQuestionnaire(data = procrastination, scaleName = 'procrastination',
+                                         scaleMin = 1, scaleMax = 5)
+
+ggplot(procrastination_clean$long, aes(procrastination_m)) + geom_histogram()
+
+scales$procrastination_clean <- procrastination_clean
+
+# Reliability (raw_alpha or std.alpha)
+procrastination_clean$reliability$procrastination$total$raw_alpha
+```
+
+```{r The Big Five Inventory}
+# The Big Five Inventory
+
+# "BFI (John & Srivastava, 1999; John, Naumann, & Soto, 2008)
+
+# 1: disagree strongly
+# 5: agree strongly
+
+summary(bigFive)
+scalesWideRaw$bigFive <- bigFive
+
+bigFive_clean <-  cleanQuestionnaire(data = bigFive, scaleName = 'bigFive',
+                                     scaleMin = 1, scaleMax = 5,
+                                     subscales = list(extroversion = c(1,6,11,16,21,26,31,36),
+                                                      agreeableness = c(2,7,12,17,22,27,32,37,42),
+                                                      conscientiousness = c(3,8,13,18,23,28,33,38,43),
+                                                      neuroticism = c(4,9,14,19,24,29,34,39),
+                                                      openness = c(5,10,15,20,25,30,35,40,41,44)),
+                                     itemsToReverse = c(2,6,8,9,12,18,21,23,24,27,31,34,35,37,41,43))
+
+ggplot(bigFive_clean$long, aes(bigFive_m)) + geom_histogram()
+
+scales$bigFive_clean <- bigFive_clean
+
+# Reliability (raw_alpha or std.alpha)
+bigFive_clean$reliability$extroversion$total$raw_alpha
+bigFive_clean$reliability$agreeableness$total$raw_alpha
+bigFive_clean$reliability$conscientiousness$total$raw_alpha
+bigFive_clean$reliability$neuroticism$total$raw_alpha
+bigFive_clean$reliability$openness$total$raw_alpha
+```
+
+```{r}
+
+```
+
+```{r combine}
+names(scales)
+scales$wellBeing1_clean$wide
+
+df1 <- left_join(scales$addictionProne_clean$wide, scales$materialism_clean$wide) %>% 
+    left_join(scales$socialNet_clean$wide) %>% 
+    left_join(scales$selfControl_clean$wide) %>% 
+    left_join(scales$procrastination_clean$wide) %>% 
+    left_join(scales$bigFive_clean$wide) %>% 
+    left_join(scales$wellBeing1_clean$wide) %>% 
+    left_join(scales$wellBeing2_clean$wide) %>%
+  left_join(demographics) %>%
+  left_join(socialQs)
+
+
+# Remove 124 year old (152)
+which(demographics$age>70)
+
+# Remove subjects with NAs
+which(is.na(procrastination$pps_1))
+# remove 56, 141, 209 (0 range on mulitple scales)
+
+remove_list =c(9,56,141,152,196,209,221)
+df2 <- df1[ ! df1$subjectID %in% remove_list, ]
+
+
+write.csv(df2, "Data/questionnaires_clean.csv", row.names = F)
+```
+
+
+
+
+
+
